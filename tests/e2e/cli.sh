@@ -7,6 +7,16 @@ root="$tmp/project"
 "$bin" init "$root"
 "$bin" init "$root"
 "$bin" profile validate "$root/profile.json"
+python3 - "$root/profile.json" <<'PY'
+import json,sys
+p=json.load(open(sys.argv[1]))
+for c in p["capabilities"]:
+    if c["id"] == "media.probe":
+        c.update(status="available",provider="test-fixture",external_processing=False)
+    elif c["id"] in {"image.describe","geolocation.infer"}:
+        c.update(status="unverified",external_processing=None)
+json.dump(p,open(sys.argv[1],"w"))
+PY
 "$bin" capability list > "$tmp/catalog.json"
 cat > "$tmp/requirement.json" <<'EOF'
 {"id":"editing/location-and-visual","required_capabilities":["media.probe"],"targets":[{"capability":"image.describe","level":"required","target_precision_ms":250}],"if_available_capabilities":["geolocation.infer"],"constraints":{"external_processing":false}}
