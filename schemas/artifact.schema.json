@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talkincode.github.io/FilmMap/schemas/artifact.schema.json",
+  "title": "FilmMap Artifact",
+  "type": "object",
+  "required": ["record_type", "protocol", "version", "artifact_id", "path", "kind", "size_bytes", "sha256"],
+  "properties": {
+    "record_type": {"const": "artifact"},
+    "protocol": {"const": "filmmap.artifact"},
+    "version": {"const": "0.1.0"},
+    "artifact_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "asset_id": {"type": ["string", "null"]},
+    "parent_asset_id": {"type": ["string", "null"]},
+    "path": {"type": ["string", "object"]},
+    "kind": {"type": "string", "minLength": 1},
+    "time": {"type": ["object", "null"]},
+    "mime_type": {"type": ["string", "null"]},
+    "size_bytes": {"type": "integer", "minimum": 0},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidence": {"type": "object"}
+  },
+  "additionalProperties": false
+}

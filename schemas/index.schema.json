@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talkincode.github.io/FilmMap/schemas/index.schema.json",
+  "title": "FilmMap Canonical Index",
+  "type": "object",
+  "required": ["protocol", "version", "revision", "status", "assets", "artifacts", "observations", "segments", "coverage", "issues", "policy_version"],
+  "properties": {
+    "protocol": {"const": "filmmap.index"},
+    "version": {"const": "0.1.0"},
+    "revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "status": {"enum": ["partial", "complete"]},
+    "assets": {"type": "array", "items": {"type": "object", "required": ["id", "uri", "kind", "size_bytes", "sha256"], "properties": {"id": {"type": "string"}, "uri": {}, "alternate_uris": {"type": "array"}, "kind": {"type": "string"}, "size_bytes": {"type": "integer", "minimum": 0}, "sha256": {"type": "string"}}, "additionalProperties": true}},
+    "artifacts": {"type": "array", "items": {"type": "object", "required": ["id", "uri", "kind", "size_bytes", "sha256", "occurrences"], "properties": {"id": {"type": "string"}, "uri": {}, "kind": {"type": "string"}, "parent_asset_id": {}, "time": {}, "occurrences": {"type": "array", "items": {"type": "object", "required": ["uri"], "properties": {"uri": {}, "parent_asset_id": {}, "time": {}}}}, "mime_type": {}, "size_bytes": {"type": "integer"}, "sha256": {"type": "string"}}, "additionalProperties": true}},
+    "observations": {"type": "array", "items": {"$ref": "observation.schema.json"}},
+    "segments": {"type": "array", "items": {"type": "object", "required": ["id", "asset_id", "kind", "time", "summary", "observation_ids", "evidence_refs", "status", "confidence"], "properties": {"id": {"type": "string", "pattern": "^seg_sha256:[0-9a-f]{64}$"}, "asset_id": {"type": "string"}, "kind": {"const": "scene_description"}, "time": {"$ref": "#/$defs/time"}, "summary": {"type": "string"}, "observation_ids": {"type": "array", "items": {"type": "string"}}, "evidence_refs": {"type": "array", "items": {"type": "string"}}, "status": {"enum": ["accepted", "candidate", "rejected", "conflicted"]}, "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}}, "additionalProperties": false}},
+    "coverage": {"type": "array"},
+    "issues": {"type": "array"},
+    "policy_version": {"type": "string"}
+  },
+  "$defs": {"time": {"type": "object", "oneOf": [{"required": ["at_ms"], "properties": {"at_ms": {"type": "integer", "minimum": 0}}, "additionalProperties": false}, {"required": ["start_ms", "end_ms"], "properties": {"start_ms": {"type": "integer", "minimum": 0}, "end_ms": {"type": "integer", "minimum": 1}}, "additionalProperties": false}]}},
+  "additionalProperties": false
+}

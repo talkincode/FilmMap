@@ -8,7 +8,7 @@ command -v ffprobe >/dev/null || { echo "ffprobe is required" >&2; exit 127; }
 [[ "$interval" =~ ^[0-9]+([.][0-9]+)?$ ]] && awk -v n="$interval" 'BEGIN{exit !(n>0)}' || { echo "interval must be > 0" >&2; exit 2; }
 mkdir -p "$out"
 duration=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 -- "$media")
-awk -v d="$duration" -v i="$interval" -v m="$limit" 'BEGIN{n=int(d/i)+1;if(n>m)n=m;for(k=0;k<n;k++)printf "%.3f\n",k*i}' |
+awk -v d="$duration" -v i="$interval" -v m="$limit" 'BEGIN{n=0;for(t=0;t<d && n<m;t+=i){printf "%.3f\n",t;n++}}' |
 while IFS= read -r ts; do
   [[ "$ts" == .* ]] && ts="0$ts"
   name=$(printf '%s' "$ts" | tr '.' '_')

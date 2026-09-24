@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talkincode.github.io/FilmMap/schemas/observation.schema.json",
+  "title": "FilmMap Observation",
+  "type": "object",
+  "required": ["record_type", "protocol", "version", "id", "asset_id", "class", "kind", "time", "value", "producer", "evidence_refs", "evidence_state", "status", "created_at_unix_ms"],
+  "properties": {
+    "record_type": {"const": "observation"},
+    "protocol": {"const": "filmmap.observation"},
+    "version": {"const": "0.1.0"},
+    "id": {"type": "string", "pattern": "^obs_sha256:[0-9a-f]{64}$"},
+    "asset_id": {"type": "string", "minLength": 1},
+    "class": {"enum": ["fact", "measurement", "interpretation"]},
+    "kind": {"type": "string", "minLength": 1},
+    "time": {"oneOf": [{"type": "null"}, {"type": "object", "required": ["at_ms"], "properties": {"at_ms": {"type": "integer", "minimum": 0}}, "additionalProperties": false}, {"type": "object", "required": ["start_ms", "end_ms"], "properties": {"start_ms": {"type": "integer", "minimum": 0}, "end_ms": {"type": "integer", "minimum": 1}}, "additionalProperties": false}]},
+    "value": {},
+    "producer": {"type": "object", "required": ["type", "id"], "properties": {"type": {"enum": ["tool", "model", "agent", "human"]}, "id": {"type": "string", "minLength": 1}, "version": {"type": ["string", "null"]}}, "additionalProperties": false},
+    "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "evidence_state": {"enum": ["available", "none"]},
+    "status": {"enum": ["accepted", "candidate", "rejected", "conflicted"]},
+    "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "created_at_unix_ms": {"type": "integer", "minimum": 0}
+  },
+  "additionalProperties": false
+}

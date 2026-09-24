@@ -27,12 +27,26 @@ while IFS= read -r -d '' media; do
   artifact_id=$(filmmap artifact add "$workspace/index.jsonl" "$media" --kind video)
   key=${artifact_id#sha256:}
   "$probe_script" "$media" > "$workspace/analysis/$key.probe.json"
+  probe_artifact_id=$(filmmap artifact add "$workspace/index.jsonl" "$workspace/analysis/$key.probe.json" --kind probe-result --parent-asset "$artifact_id" --mime-type application/json)
+  frame_ids_json='[]'
   if [[ "$frames" == true ]]; then
     "$frames_script" "$media" "$workspace/analysis/$key-frames" "$interval" >/dev/null
+    frame_ids_json=$(python3 - "$workspace/index.jsonl" "$artifact_id" "$workspace/analysis/$key-frames/frames.jsonl" <<'PY'
+import json, pathlib, subprocess, sys
+index, parent, manifest = sys.argv[1:]
+ids=[]
+for line in pathlib.Path(manifest).read_text().splitlines():
+    entry=json.loads(line)
+    path=pathlib.Path(manifest).parent / entry["frame"]
+    ms=round(float(entry["time_seconds"])*1000)
+    ids.append(subprocess.check_output(["filmmap","artifact","add",index,str(path),"--kind","frame","--parent-asset",parent,"--time-ms",str(ms),"--mime-type","image/jpeg"],text=True).strip())
+print(json.dumps(ids))
+PY
+)
   fi
-  python3 - "$artifact_id" "$media" "$key.probe.json" "$frames" <<'PY' >> "$manifest"
+  python3 - "$artifact_id" "$media" "$key.probe.json" "$probe_artifact_id" "$frame_ids_json" "$frames" <<'PY' >> "$manifest"
 import json, sys
-print(json.dumps({"artifact_id":sys.argv[1],"path":sys.argv[2],"probe":"analysis/"+sys.argv[3],"frames_requested":sys.argv[4]=="true"},ensure_ascii=False))
+print(json.dumps({"artifact_id":sys.argv[1],"path":sys.argv[2],"probe":"analysis/"+sys.argv[3],"probe_artifact_id":sys.argv[4],"frame_artifact_ids":json.loads(sys.argv[5]),"frames_requested":sys.argv[6]=="true"},ensure_ascii=False))
 PY
   count=$((count + 1))
 done < <(find "$root" -type f -print0)

@@ -20,9 +20,9 @@ FilmMap 把分散的媒体文件、分析能力和 Agent 观察结果组织成�
 
 - **CLI 工作区与能力词汇**：`filmmap init`、`filmmap capability list`；入口 `src/main.rs`，词汇源 `capabilities/catalog.json`。
 - **本机工具 profile**：`profile detect` 检查外部可执行程序，Agent/服务能力标记为 unverified；profile 可校验。
-- **需求规划**：`filmmap plan` 对比需求中的 required capabilities 和 profile，输出 ready/unverified/missing。
-- **素材与观察索引**：素材 SHA-256 ID、观察记录、JSONL 校验与文本/时间查询。
-- **Agent 与外部工具扩展**：独立 skill、批量目录扫描/ffprobe/抽帧脚本及安装入口。
+- **需求规划**：`filmmap plan` 支持 required/optional/if_available 能力级别，并为显式声明的本地处理和时间精度约束输出满足/缺失/未验证状态。当前不做模型服务的真实探测或质量基准。
+- **素材与观察索引**：素材 SHA-256 ID、派生 artifact 和同内容多源位置 occurrences；观察记录支持事实/测量/推断类别、候选状态、结构化 value、来源版本、毫秒点/半开区间、证据 artifact 引用。`synthesize` 生成带稳定 revision 的 canonical JSON，校验引用并报告重叠冲突；查询可按文本、素材、类型和毫秒范围过滤。
+- **Agent 与外部工具扩展**：独立 skill、批量目录扫描/ffprobe/抽帧脚本及安装入口；扫描会把 probe JSON 和抽取帧注册为证据 artifacts，并保留帧源时间映射。
 - **分发与文档工作流**：Rust CI、mdBook、Release 构建配置；是否真实发布以 GitHub Release 记录为准。
 
 ## 非目标（铁律）
@@ -51,7 +51,8 @@ FilmMap 把分散的媒体文件、分析能力和 Agent 观察结果组织成�
 | --- | --- | --- | --- | --- | --- | --- |
 | 工作区初始化与素材登记 | 中 | ✅ | ✅ | 不适用：本地 CLI 无角色权限模型 | ✅ CLI E2E 重新运行并验证已有项目完整；不可读文件失败后索引不变 | `tests/e2e/cli.sh`, `tests/e2e/scan.sh` |
 | Profile 探测、校验与需求规划 | 中 | ✅ | ✅ | 不适用：本地 CLI 无角色权限模型 | 不适用：profile 检查和 plan 只读 | `tests/e2e/cli.sh` |
-| 观察写入、索引校验与检索 | 中 | ✅ | ✅ | 不适用：本地 CLI 无角色权限模型 | ✅ E2E 保留原 index 并拒绝无效记录（覆盖待补） | `tests/e2e/cli.sh` |
+| 观察写入、canonical 合成、证据引用与检索 | 中 | ✅ | ✅ 缺坏引用拒绝的独立断言待补 | 不适用：本地 CLI 无角色权限模型 | 冲突保留并显式报告；不可读素材失败后索引不变 | `tests/e2e/cli.sh` |
+| 批量扫描、抽帧映射与同内容多位置 | 中 | ✅ | ❌ 部分 FFmpeg 失败恢复覆盖待补 | 不适用：本地 CLI 无角色权限模型 | 重复内容记录为 occurrence，不丢失时间点 | `tests/e2e/scan.sh` |
 | Skill/工具安装 | 中 | ✅ 自定义目录 | ✅ 冲突时拒绝覆盖 | 不适用：安装到调用者指定的本地目录 | ✅ 冲突失败后已有文件保持不变 | `tests/e2e/cli.sh` |
 | 发布资产和平台安装 | 高 | ❌ 缺口：需在干净平台验证安装与 checksum | ❌ 缺口 | 不适用：公开下载，无仓库内用户角色授权 | 不适用：当前无自动系统升级/卸载操作 | `.github/workflows/release.yml`（配置，不代表已发布验收） |
 
