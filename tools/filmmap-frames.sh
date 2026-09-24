@@ -10,6 +10,7 @@ mkdir -p "$out"
 duration=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 -- "$media")
 awk -v d="$duration" -v i="$interval" -v m="$limit" 'BEGIN{n=int(d/i)+1;if(n>m)n=m;for(k=0;k<n;k++)printf "%.3f\n",k*i}' |
 while IFS= read -r ts; do
+  [[ "$ts" == .* ]] && ts="0$ts"
   name=$(printf '%s' "$ts" | tr '.' '_')
   ffmpeg -hide_banner -loglevel error -ss "$ts" -i "$media" -frames:v 1 -vf 'scale=960:-2:out_range=pc,format=yuvj420p' -y "$out/frame_${name}.jpg"
   printf '{"time_seconds":%s,"frame":"frame_%s.jpg"}\n' "$ts" "$name"
