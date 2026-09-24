@@ -9,8 +9,15 @@ filmmap init ./filmmap-project
 filmmap profile detect --output ./filmmap-project/profile.json
 filmmap capability list
 filmmap-scan.sh /path/to/media-directory ./filmmap-project
-filmmap validate ./filmmap-project/index.jsonl
-filmmap query ./filmmap-project/index.jsonl "mountain"
+filmmap-scan.sh ./media ./filmmap-project --frames 2
+filmmap observe add ./filmmap-project/index.jsonl ASSET_ID \
+  --kind scene_description --class interpretation \
+  --start-ms 12000 --end-ms 18000 \
+  --value-json '{"text":"person walking beside a lake"}' \
+  --evidence-ref FRAME_ARTIFACT_ID
+filmmap synthesize ./filmmap-project/index.jsonl --out ./filmmap-project/index.json
+filmmap validate ./filmmap-project/index.json
+filmmap query ./filmmap-project/index.json "lake" --kind scene_description --from-ms 12000 --to-ms 18000
 ```
 
 See the [Chinese guide](README_CN.md), [mdBook](https://talkincode.github.io/FilmMap/) and [capability coverage matrix](docs/roadmap.md#验收矩阵业务能力覆盖矩阵). Level 0 defines contracts and executable workflow; it does not bundle AI providers or alter source media.
@@ -25,7 +32,7 @@ Release CI publishes Linux amd64/arm64, macOS arm64/x86_64 archives, Linux `.deb
 
 ## Editing workflow
 
-`filmmap profile detect` records locally discoverable executables. Vision, OCR, transcription and place inference remain `unverified` until the surrounding Agent/provider declares them. Use `filmmap plan` against a requirement before analysis. Store observations with source, time, confidence and evidence; distinguish embedded GPS from visual place inference. Consult [the dedicated FilmMap skill](skills/filmmap/SKILL.md) and install it with `filmmap install skill`.
+`filmmap profile detect` records locally discoverable executables. Vision, OCR, transcription and place inference remain `unverified` until the surrounding Agent/provider declares them. Use `filmmap plan` against a requirement before analysis. Observations support structured values, fact/measurement/interpretation class, acceptance status, millisecond points or half-open intervals, producer version and references to registered evidence artifacts. `filmmap synthesize` produces a deterministic canonical index with scene segments and conflict issues; queries remain text filtering rather than semantic retrieval. Distinguish embedded GPS from visual place inference. Consult [the dedicated FilmMap skill](skills/filmmap/SKILL.md) and install it with `filmmap install skill`.
 
 The scripts in `tools/` are optional helpers, not hidden dependencies. Package installers place them alongside the CLI; `filmmap install tools` installs them to a custom folder. FFmpeg/ffprobe are external prerequisites. `filmmap-scan.sh <media-root> <workspace> [--frames] [interval]` repeats directory registration and metadata probing, with optional sampled frames.
 

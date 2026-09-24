@@ -5,7 +5,7 @@ media files (read-only)
    ├── FFmpeg / metadata scripts ──┐
    └── host Agent / external AI ───┤ evidence + observations
                                    ▼
-FilmMap CLI: profile → plan → stable artifact IDs → validate/query/export
+FilmMap CLI: profile → plan → stable artifact IDs → evidence observations → canonical synthesize/validate/query
                                    ▼
 JSONL evidence index + portable profile (editing handoff)
 ```
@@ -21,11 +21,11 @@ JSONL evidence index + portable profile (editing handoff)
 | Audio | `audio.extract`, `audio.transcribe` | source-aligned speech segments |
 | Capture location | `metadata.exif.read`, `metadata.gps.read`, `geolocation.infer` | camera facts, embedded coordinates, candidate place with evidence |
 
-These names define capability semantics, not service implementations. The plan command compares a requirement's `required_capabilities` with this profile and explicitly separates ready, missing and unverified items.
+These names define capability semantics, not service implementations. The plan command classifies required, optional and if-available capabilities and reports precision/privacy constraint checks as satisfied, missing or unverified; it does not execute the model or benchmark output quality.
 
 ## Evidence and time
 
-An artifact is a source file identified by SHA-256. Observations reference the artifact and preserve capability/source, optional source timestamp, confidence and value. Preserve original media; generated frames and audio derivatives are artifacts too. Timestamps are source-media seconds unless an explicit offset is recorded. Location claims include evidence and alternatives; embedded coordinates are not interchangeable with visual inference. Contradictions should remain visible.
+Assets and derived artifacts have content SHA-256 identities. A repeated byte-identical frame shares its artifact identity while `occurrences` preserve every source URI, parent asset and source time. Observations use the `filmmap.observation` envelope with a stable ID, class, kind, producer/version, structured value, evidence artifact references, status, confidence and source time in integer milliseconds (point or half-open interval). `filmmap synthesize` creates a canonical revisioned JSON index, scene segments derived from interval scene descriptions, and explicit overlap conflict issues. Location candidates remain distinct from embedded GPS facts and should preserve unknowns, alternatives, and direct/contextual evidence. Queries support text filtering, asset/kind filters and millisecond bounds; they are not semantic search.
 
 ## Agent extensibility
 

@@ -1,1 +1,19 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://talkincode.github.io/FilmMap/schemas/requirement.schema.json","type":"object","required":["id","required_capabilities"],"properties":{"id":{"type":"string","minLength":1},"required_capabilities":{"type":"array","items":{"type":"string"},"uniqueItems":true},"scope":{"type":"object"},"outputs":{"type":"array","items":{"type":"string"}},"constraints":{"type":"object"}},"additionalProperties":false}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talkincode.github.io/FilmMap/schemas/requirement.schema.json",
+  "title": "FilmMap Analysis Requirement",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "required_capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "optional_capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "if_available_capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "targets": {"type": "array", "items": {"type": "object", "required": ["capability", "level"], "properties": {"capability": {"type": "string"}, "level": {"enum": ["required", "optional", "if_available"]}, "target_precision_ms": {"type": "number", "minimum": 0}, "input_types": {"type": "array", "items": {"type": "string"}}, "output_types": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": true}},
+    "scope": {"type": "object", "properties": {"assets": {"type": "array", "items": {"type": "string"}}, "time_range_ms": {"type": "object", "required": ["start_ms", "end_ms"], "properties": {"start_ms": {"type": "integer", "minimum": 0}, "end_ms": {"type": "integer", "minimum": 0}}, "additionalProperties": false}}, "additionalProperties": true},
+    "outputs": {"type": "array", "items": {"type": "string"}},
+    "constraints": {"type": "object", "properties": {"external_processing": {"type": "boolean"}, "min_coverage": {"type": "number", "minimum": 0, "maximum": 1}, "max_error_ms": {"type": "number", "minimum": 0}, "languages": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": true}
+  },
+  "anyOf": [{"required": ["required_capabilities"]}, {"required": ["optional_capabilities"]}, {"required": ["if_available_capabilities"]}, {"required": ["targets"]}],
+  "additionalProperties": false
+}
