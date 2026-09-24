@@ -1,0 +1,5 @@
+[
+  {"name":"filmmap-probe.sh","path":"tools/filmmap-probe.sh"},
+  {"name":"filmmap-frames.sh","path":"tools/filmmap-frames.sh"},
+  {"name":"filmmap-scan.sh","path":"tools/filmmap-scan.sh"}
+]

@@ -1,0 +1,14 @@
+[
+  {"id":"media.probe","group":"media","purpose":"Read container, streams, duration, dimensions, frame rate and codec metadata","executable":"ffprobe","outputs":["duration","streams","dimensions","frame_rate","codec"]},
+  {"id":"media.frame.extract","group":"media","purpose":"Extract frames at requested source timestamps","executable":"ffmpeg","outputs":["frame_artifact","source_time_seconds"]},
+  {"id":"media.contact_sheet","group":"media","purpose":"Build a labeled contact sheet from sampled frames","executable":"filmmap-contact-sheet","outputs":["image_artifact","frame_manifest"]},
+  {"id":"media.scene.detect","group":"media","purpose":"Find candidate shot boundaries with timestamps","executable":"ffmpeg","outputs":["scene_boundaries"]},
+  {"id":"image.describe","group":"vision","purpose":"Describe visible subjects, actions, setting and shot properties","outputs":["description","confidence","evidence_frames"]},
+  {"id":"image.ocr","group":"vision","purpose":"Recognize visible text with region and timestamp evidence","outputs":["text","region","time_seconds","confidence"]},
+  {"id":"audio.extract","group":"audio","purpose":"Extract audio stream while preserving source time mapping","executable":"ffmpeg","outputs":["audio_artifact","source_offset_seconds"]},
+  {"id":"audio.transcribe","group":"audio","purpose":"Transcribe speech with time-aligned segments","outputs":["transcript_segments","speaker_labels","confidence"]},
+  {"id":"metadata.exif.read","group":"metadata","purpose":"Read embedded capture metadata","executable":"exiftool","outputs":["capture_time","camera","lens"]},
+  {"id":"metadata.gps.read","group":"geolocation","purpose":"Read embedded coordinates and accuracy metadata","executable":"exiftool","outputs":["latitude","longitude","accuracy","evidence"]},
+  {"id":"geolocation.infer","group":"geolocation","purpose":"Infer candidate location from visual/context evidence","outputs":["candidate_place","coordinates","confidence","evidence","alternatives"]},
+  {"id":"asset.hash.sha256","group":"integrity","purpose":"Compute stable content identity","outputs":["sha256"]}
+]

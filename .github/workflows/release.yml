@@ -1,0 +1,140 @@
+name: Release
+on:
+  push:
+    tags: ['v*.*.*']
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            platform: linux-amd64
+            deb_arch: amd64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            platform: linux-arm64
+            deb_arch: arm64
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+            platform: darwin-amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: darwin-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build binary
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Package archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/stage
+          cp target/${{ matrix.target }}/release/filmmap dist/stage/filmmap
+          cp skills/filmmap/SKILL.md tools/filmmap-probe.sh tools/filmmap-frames.sh tools/filmmap-scan.sh dist/stage/
+          tar -czf dist/filmmap-${{ matrix.platform }}.tar.gz -C dist/stage .
+          if [[ '${{ matrix.deb_arch }}' != '' ]]; then
+            root=dist/deb-root
+            mkdir -p "$root/DEBIAN" "$root/usr/bin" "$root/usr/share/filmmap/skill"
+            cp target/${{ matrix.target }}/release/filmmap "$root/usr/bin/filmmap"
+            cp skills/filmmap/SKILL.md "$root/usr/share/filmmap/skill/SKILL.md"
+            cp tools/filmmap-*.sh "$root/usr/bin/"
+            printf 'Package: filmmap\nVersion: %s\nArchitecture: %s\nMaintainer: talkincode\nDescription: Agent-native media capability profiles and editing indexes\n' "${GITHUB_REF_NAME#v}" '${{ matrix.deb_arch }}' > "$root/DEBIAN/control"
+            dpkg-deb --build "$root" "dist/filmmap_${GITHUB_REF_NAME#v}_${{ matrix.deb_arch }}.deb"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: filmmap-${{ matrix.platform }}
+          path: dist/*
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: filmmap-*
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum -- * > checksums.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*
+  homebrew:
+    needs: publish
+    runs-on: ubuntu-latest
+    env:
+      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    steps:
+      - name: Skip without tap token
+        if: ${{ env.TAP_TOKEN == '' }}
+        run: echo "HOMEBREW_TAP_TOKEN is not configured; skipping tap update"
+      - uses: actions/download-artifact@v4
+        if: ${{ env.TAP_TOKEN != '' }}
+        with:
+          pattern: filmmap-*
+          path: dist
+          merge-multiple: true
+      - name: Update Homebrew formula
+        if: ${{ env.TAP_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          tag=${GITHUB_REF_NAME}
+          version=${tag#v}
+          cd dist
+          sha_arm=$(sha256sum filmmap-darwin-arm64.tar.gz | cut -d' ' -f1)
+          sha_intel=$(sha256sum filmmap-darwin-amd64.tar.gz | cut -d' ' -f1)
+          sha_linux_arm=$(sha256sum filmmap-linux-arm64.tar.gz | cut -d' ' -f1)
+          sha_linux_intel=$(sha256sum filmmap-linux-amd64.tar.gz | cut -d' ' -f1)
+          cd ..
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/talkincode/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+          cat > tap/Formula/filmmap.rb <<FORMULA
+          class Filmmap < Formula
+            desc "Agent-native media capability profiles and editing indexes"
+            homepage "https://github.com/talkincode/FilmMap"
+            version "${version}"
+            on_macos do
+              on_arm do
+                url "https://github.com/talkincode/FilmMap/releases/download/${tag}/filmmap-darwin-arm64.tar.gz"
+                sha256 "${sha_arm}"
+              end
+              on_intel do
+                url "https://github.com/talkincode/FilmMap/releases/download/${tag}/filmmap-darwin-amd64.tar.gz"
+                sha256 "${sha_intel}"
+              end
+            end
+            on_linux do
+              on_arm do
+                url "https://github.com/talkincode/FilmMap/releases/download/${tag}/filmmap-linux-arm64.tar.gz"
+                sha256 "${sha_linux_arm}"
+              end
+              on_intel do
+                url "https://github.com/talkincode/FilmMap/releases/download/${tag}/filmmap-linux-amd64.tar.gz"
+                sha256 "${sha_linux_intel}"
+              end
+            end
+            def install
+              bin.install "filmmap"
+              (share/"filmmap/skill").install "SKILL.md"
+              bin.install "filmmap-probe.sh", "filmmap-frames.sh", "filmmap-scan.sh"
+            end
+            test do
+              assert_match "FilmMap", shell_output("#{bin}/filmmap --help")
+            end
+          end
+          FORMULA
+          cd tap
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add Formula/filmmap.rb
+          git commit -m "Update filmmap to ${version}"
+          git push

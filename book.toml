@@ -1,0 +1,8 @@
+[book]
+title = "FilmMap"
+authors = ["talkincode"]
+language = "zh-CN"
+src = "docs/book-src"
+
+[output.html]
+git-repository-url = "https://github.com/talkincode/FilmMap"
